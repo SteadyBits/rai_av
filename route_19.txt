@@ -18,15 +18,15 @@
                     [
                         "RouteScenario_19",
                         0,
-                        "Failed - Code Crashed..."
+                        "Failed - Agent couldn't be set up"
                     ]
                 ]
             },
             "route_id": -1,
             "scores": {
-                "score_composed": 2.904694819912014,
+                "score_composed": 0.0,
                 "score_penalty": 1.0,
-                "score_route": 2.904694819912014
+                "score_route": 0.0
             },
             "status": "Failed"
         },
@@ -49,22 +49,22 @@
                     "vehicle_blocked": []
                 },
                 "meta": {
-                    "duration_game": 8.00000011920929,
-                    "duration_system": 12.531769037246704,
+                    "duration_game": 0.0,
+                    "duration_system": 0.0,
                     "route_length": 1262.6691525716578
                 },
                 "route_id": "RouteScenario_19",
                 "scores": {
-                    "score_composed": 2.904694819912014,
+                    "score_composed": 0.0,
                     "score_penalty": 1.0,
-                    "score_route": 2.904694819912014
+                    "score_route": 0.0
                 },
-                "status": "Failed - Code Crashed..."
+                "status": "Failed - Agent couldn't be set up"
             }
         ]
     },
     "eligible": true,
-    "entry_status": "Finished",
+    "entry_status": "Finished with agent errors",
     "labels": [
         "Avg. driving score",
         "Avg. route completion",
@@ -79,17 +79,10 @@
         "Route timeouts",
         "Agent blocked"
     ],
-    "sensors": [
-        "carla_camera",
-        "carla_camera",
-        "carla_camera",
-        "carla_imu",
-        "carla_gnss",
-        "carla_speedometer"
-    ],
+    "sensors": [],
     "values": [
-        "2.905",
-        "2.905",
+        "0.000",
+        "0.000",
         "1.000",
         "0.000",
         "0.000",
