@@ -1,4 +1,5 @@
-*epoch24.ckpt
+epoch24.ckpt
+.vscode
 *.pyc
 *.json
 *.log
