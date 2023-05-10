@@ -26,16 +26,16 @@ class Robustness:
 
         model_inputs[:, 0, :, start_idx:end_idx] = input_image
 
-        # figure = plt.figure(figsize=(10, 8))
-        # cols, rows = 5, 5
-        # for i in range(1, cols * rows + 1):
-        #     sample_idx = torch.randint(len(model_inputs), size=(1,)).item()
-        #     img = model_inputs[sample_idx]
-        #     figure.add_subplot(rows, cols, i)
-        #     plt.title("labels")
-        #     plt.axis("off")
-        #     plt.imshow(img.squeeze(), cmap="gray")
-        # plt.show()
+        figure = plt.figure(figsize=(10, 8))
+        cols, rows = 5, 5
+        for i in range(1, cols * rows + 1):
+            sample_idx = torch.randint(len(model_inputs), size=(1,)).item()
+            img = model_inputs[sample_idx]
+            figure.add_subplot(rows, cols, i)
+            plt.title("labels")
+            plt.axis("off")
+            plt.imshow(img.squeeze(), cmap="gray")
+        plt.show()
 
         return model_inputs
     

@@ -48,8 +48,8 @@ class RAIModels(BaseRAIModel):
         self.set_model_name(self.__model)
 
         self.__interpreter = Interpretability(self.__model)
-        self.__robuster = Robustness()
-        self.__emitter = Emission()
+        self.robuster = Robustness()
+        self.emitter = Emission()
 
         self.__output = None
 
@@ -74,6 +74,36 @@ class RAIModels(BaseRAIModel):
                 sensor_data['lidar'] = model_input.data
         return sensor_data
     
+
+    def start_emission_tracker(self):
+        self.__emitter.start_emissions_tracker()
+
+    def stop_emission_tracker(self):
+        self.__emitter.stop_emissions_tracker()
+
+    def perturb_data(self):
+        noised_inputs = []
+        self.__is_addnoise = True
+        if self.__is_addnoise:
+            model_input = model_args[self.__sensor_id]
+            if model_input.sensor == 'camera':
+                if self.__directions[self.__direction_id] in model_input.order:
+                    noised_inputs.append(self.__robuster.noise_camera_input(model_input, \
+                        self.__noise_params[self.__noise_id][0], self.__noise_params[self.__noise_id][1], \
+                        self.__directions[self.__direction_id]))
+            elif model_input.senor == 'lidar':
+                if self.__directions[self.__direction_id] in model_input.order:
+                    noised_inputs.append(self.__robuster.noise_lidar_input(model_input, \
+                        self.__noise_params[self.__noise_id][0], self.__noise_params[self.__noise_id][1], \
+                        self.__directions[self.__direction_id]))
+        
+        # In case no noise was added to the input
+        if len(noised_inputs) == 0:
+            noised_inputs.append(model_args[0].data)
+        
+        self.__no_predictions += 1
+
+
     def predict(self, model_args):    
         model_args = [SensorArgs(**arg) for arg in model_args['model_args']]
         # add noise to data from sensors
@@ -110,7 +140,7 @@ class RAIModels(BaseRAIModel):
         self.__no_predictions += 1
 
         return self.__output
-        
+
 
     # call this method after each scenario run is complete. Robustness stats would be logged
     # a new runs starts with the next noise flavour

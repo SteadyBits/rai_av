@@ -80,12 +80,13 @@ class AutonomousAgent(object):
         :return:
         """
         pass
-
+    
     def __call__(self):
         """
         Execute the agent call, e.g. agent()
         Returns the next vehicle controls
         """
+        
         input_data = self.sensor_interface.get_data()
 
         timestamp = GameTime.get_time()

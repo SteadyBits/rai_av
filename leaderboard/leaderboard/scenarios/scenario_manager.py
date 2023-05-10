@@ -45,7 +45,7 @@ class ScenarioManager(object):
     """
 
 
-    def __init__(self, timeout, debug_mode=False):
+    def __init__(self, timeout, debug_mode=False, is_rai=False):
         """
         Setups up the parameters, which will be filled at load_scenario()
         """
@@ -115,7 +115,7 @@ class ScenarioManager(object):
 
         self._agent.setup_sensors(self.ego_vehicles[0], self._debug_mode)
 
-    def run_scenario(self):
+    def run_scenario(self, rai_engine):
         """
         Trigger the start of the scenario and wait for it to finish/fail
         """
@@ -133,9 +133,9 @@ class ScenarioManager(object):
                 if snapshot:
                     timestamp = snapshot.timestamp
             if timestamp:
-                self._tick_scenario(timestamp)
+                self._tick_scenario(timestamp, rai_engine)
 
-    def _tick_scenario(self, timestamp):
+    def _tick_scenario(self, timestamp, rai_engine):
         """
         Run next tick of scenario and the agent and tick the world.
         """
@@ -149,7 +149,8 @@ class ScenarioManager(object):
             CarlaDataProvider.on_carla_tick()
 
             try:
-                ego_action = self._agent()
+
+                ego_action = self._agent(rai_engine)
 
             # Special exception inside the agent that isn't caused by the agent
             except SensorReceivedNoData as e:

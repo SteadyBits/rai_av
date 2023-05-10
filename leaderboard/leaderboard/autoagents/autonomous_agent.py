@@ -116,6 +116,39 @@ class AutonomousAgent(object):
         control.manual_gear_shift = False
 
         return control
+    
+    def __call__(self, rai_engine):
+        """
+        Execute the agent call, e.g. agent()
+        Returns the next vehicle controls
+        """
+        
+        input_data = self.sensor_interface.get_data()
+        print("INPUT_DATA ++++++++++++ ", input_data.keys)
+        if rai_engine is None:
+            timestamp = GameTime.get_time()
+            wallclock = GameTime.get_wallclocktime()
+            print('======[Agent] Wallclock_time = {} / Sim_time = {}'.format(wallclock, timestamp))
+
+            control = self.run_step(input_data, timestamp)
+            control.manual_gear_shift = False
+
+            return control
+        
+        else:
+            #Create an instance of RAI engine
+            input_data = rai_engine.perturb_data(input_data)
+
+            timestamp = GameTime.get_time()
+            wallclock = GameTime.get_wallclocktime()
+            print('======[Agent] Wallclock_time = {} / Sim_time = {}'.format(wallclock, timestamp))
+
+            rai_engine.emmitter.start_tracking()
+            control = self.run_step(input_data, timestamp)
+            rai_engine.emitter.stop_tracking()
+            control.manual_gear_shift = False
+
+            return control
 
     def set_global_plan(self, global_plan_gps, global_plan_world_coord):
         """

@@ -25,6 +25,7 @@ import torchvision
 
 import carla
 import signal
+from core import responsibleAI
 #from scenario_runner.srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 
 from srunner.scenariomanager.carla_data_provider import *
@@ -97,8 +98,21 @@ class LeaderboardEvaluator(object):
         self.module_agent = importlib.import_module(module_name)
         print("Agent loading complete...")
 
+        #responsible AI Index
+        self.model_args = dict({'model_args': [
+            {'sensor':'camera',
+            'data': 0,
+            'no_of_images': 1,
+            'concat': True,
+            'order': {'front': 0},
+            'concat_axis': -1
+            }
+            ]})
+        self.rai_engine = responsibleAI.RAIModels(None, self.model_args)
+        self.is_rai = False
+
         # Create the ScenarioManager
-        self.manager = ScenarioManager(args.timeout, args.debug > 1)
+        self.manager = ScenarioManager(args.timeout, args.debug > 1, args.is_rai)
 
         # Time control for summary purposes
         self._start_time = GameTime.get_time()
@@ -247,7 +261,7 @@ class LeaderboardEvaluator(object):
         self.statistics_manager.save_record(current_stats_record, config.index, checkpoint)
         self.statistics_manager.save_entry_status(entry_status, False, checkpoint)
 
-    def _load_and_run_scenario(self, args, config):
+    def _load_and_run_scenario(self, args, config, rai_engine=None):
         """
         Load and run the scenario given by config.
 
@@ -350,7 +364,7 @@ class LeaderboardEvaluator(object):
 
         # Run the scenario
         try:
-            self.manager.run_scenario()
+            self.manager.run_scenario(rai_engine)
 
         except AgentError as e:
             # The agent has failed -> stop the route
@@ -397,7 +411,7 @@ class LeaderboardEvaluator(object):
         Run the challenge mode
         """
         route_indexer = RouteIndexer(args.routes, args.scenarios, args.repetitions)
-
+        
         if args.resume:
             route_indexer.resume(args.checkpoint)
             self.statistics_manager.resume(args.checkpoint)
@@ -405,19 +419,35 @@ class LeaderboardEvaluator(object):
             self.statistics_manager.clear_record(args.checkpoint)
             route_indexer.save_state(args.checkpoint)
 
-        while route_indexer.peek():
-            # setup
-            config = route_indexer.next()
+        #whether to run rai index of not
+        self.is_rai = args.is_rai
+        if args.is_rai:
+            if route_indexer.peek():
+                # setup
+                config = route_indexer.next()
+                iterations = 1
+                while iterations > -1:
+                    self._load_and_run_scenario(args, config, self.rai_engine)
+                    iterations =- 1
+                    route_record = self.statistics_manager.compute_global_statistics(1)
+                    agent_score = route_record.scores['score_composed']
+                    self.rai_engine.register_model_rai(agent_score)
 
-            # run
-            self._load_and_run_scenario(args, config)
+        else:
+            
+            while route_indexer.peek():
+                # setup
+                config = route_indexer.next()
 
-            route_indexer.save_state(args.checkpoint)
+                # run
+                self._load_and_run_scenario(args, config)
 
-        # save global statistics
-        print("\033[1m> Registering the global statistics\033[0m")
-        global_stats_record = self.statistics_manager.compute_global_statistics(route_indexer.total)
-        StatisticsManager.save_global_record(global_stats_record, self.sensor_icons, route_indexer.total, args.checkpoint)
+                route_indexer.save_state(args.checkpoint)
+
+            # save global statistics
+            print("\033[1m> Registering the global statistics\033[0m")
+            global_stats_record = self.statistics_manager.compute_global_statistics(route_indexer.total)
+            StatisticsManager.save_global_record(global_stats_record, self.sensor_icons, route_indexer.total, args.checkpoint)
 
 
 def main():
@@ -460,6 +490,7 @@ def main():
                         default='./simulation_results.json',
                         help="Path to checkpoint used for saving statistics and resuming")
 
+    parser.add_argument('--is_rai', type=bool, help='Run RAI track', default=False)
     arguments = parser.parse_args()
 
     statistics_manager = StatisticsManager()
