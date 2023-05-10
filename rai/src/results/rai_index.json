@@ -1,0 +1,15 @@
+{
+    "camera_front": {
+        "model name": "PyTorch Model",
+        "model_accuracy": 0.6646,
+        "interpretability": 1.3333333333333335,
+        "interpretability index": 3,
+        "single_prediction_emission": 1.4705670746697951e-05,
+        "total_inference_emissions": 0.000294113414933959,
+        "training_emissions": 14.705670746697951,
+        "emission index": 3,
+        "robustness": {
+            "camera_front": 0.9116905360102561
+        }
+    }
+}

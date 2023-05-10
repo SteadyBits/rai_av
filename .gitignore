@@ -1,9 +1,0 @@
-epoch24.ckpt
-.vscode
-*.pyc
-*.json
-*.log
-*/data
-.project
-.pydevproject
-*.sh
