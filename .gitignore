@@ -3,6 +3,7 @@ epoch24.ckpt
 *.pyc
 *.json
 *.log
+*/data
 .project
 .pydevproject
 *.sh
