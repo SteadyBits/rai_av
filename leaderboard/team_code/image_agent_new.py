@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw
 
 from carla_project.src.image_model import ImageModel
 from carla_project.src.converter import Converter
-from rai.src.core import responsibleAI
+from core import responsibleAI
 
 from team_code.base_agent import BaseAgent
 from team_code.pid_controller import PIDController

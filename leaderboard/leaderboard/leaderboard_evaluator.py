@@ -25,7 +25,7 @@ import torchvision
 
 import carla
 import signal
-from rai.src.core import responsibleAI
+from core import responsibleAI
 #from scenario_runner.srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 
 from srunner.scenariomanager.carla_data_provider import *
@@ -99,7 +99,16 @@ class LeaderboardEvaluator(object):
         print("Agent loading complete...")
 
         #responsible AI Index
-        self.rai_engine = responsibleAI.RAIModels(self.net, self.model_args)
+        self.model_args = dict({'model_args': [
+            {'sensor':'camera',
+            'data': 0,
+            'no_of_images': 1,
+            'concat': True,
+            'order': {'front': 0},
+            'concat_axis': -1
+            }
+            ]})
+        self.rai_engine = responsibleAI.RAIModels(None, self.model_args)
         self.is_rai = False
 
         # Create the ScenarioManager

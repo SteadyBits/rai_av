@@ -13,6 +13,7 @@ export PYTHONPATH=$PYTHONPATH:leaderboard
 export PYTHONPATH=$PYTHONPATH:leaderboard/team_code
 export PYTHONPATH=$PYTHONPATH:rai/src
 export PYTHONPATH=$PYTHONPATH:scenario_runner
+export PYTHONPATH=$PYTHONPATH:/home/domeiza/RAILS/carlachallenge/responsibleAI/src
 
 if [ -d "$TEAM_CONFIG" ]; then
     CHECKPOINT_ENDPOINT="$TEAM_CONFIG/$(basename $ROUTES .xml).txt"
