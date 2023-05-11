@@ -5,3 +5,4 @@ epoch24.ckpt
 *.log
 .project
 .pydevproject
+*/responsibleAI copy.py

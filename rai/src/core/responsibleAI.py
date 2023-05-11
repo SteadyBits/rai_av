@@ -29,51 +29,15 @@ class SensorArgs:
 
 class RAIModels(BaseRAIModel):
 
-    def __init__(self, model, model_args):
-        self.__model_list = []
-        
-        self.__is_addnoise = True
-
-        #mean and stdv of noise distributions
-        self.__noise_params = model_args['model_args']['noise_params'] if 'noise_params' in model_args['model_args'] \
-              else [[0.5, 0.0], [0.5, 0.2], [0.5, 0.3], [0.5, 0.4]]
-        
-        self.__sensors = [ model_input['sensor'] for model_input in model_args['model_args'] ]
-
-        self.__noise_id = 0
-        self.__sensor_id = 0
-
-        self.__model = model
- 
-        self.set_model_name(self.__model)
-
-        self.__interpreter = Interpretability(self.__model)
-        self.robuster = Robustness()
-        self.emitter = Emission()
-
-        self.__output = None
+    def __init__(self):
+        self.__robuster = Robustness()
+        self.__emitter = Emission()
 
         self.__no_predictions = 0
         self.__emission_calc_rate = 20
-        self.__direction_id = 0
-        self.__directions = ['front', 'right', 'left', 'rear']
-        self.__input_dimensions = len(model_args['model_args'][0]['order'].keys())
-        
+
         self.__mean = 0.5
         self.__stddev = 0.0 # modify between 0.1 and 0.5
-    
-    def parse_model_args(self, model_args):
-        camera_data = None
-        lidar_data = None
-        sensor_data = {}
-        for model_input in model_args:
-            if model_input.senor == 'camera':
-                sensor_data['camera'] = model_input.data
-
-            elif model_input.sensor == 'lidar':
-                sensor_data['lidar'] = model_input.data
-        return sensor_data
-    
 
     def start_emission_tracker(self):
         self.__emitter.start_emissions_tracker()
@@ -81,74 +45,24 @@ class RAIModels(BaseRAIModel):
     def stop_emission_tracker(self):
         self.__emitter.stop_emissions_tracker()
 
-    def perturb_data(self):
-        noised_inputs = []
-        self.__is_addnoise = True
-        if self.__is_addnoise:
-            model_input = model_args[self.__sensor_id]
-            if model_input.sensor == 'camera':
-                if self.__directions[self.__direction_id] in model_input.order:
-                    noised_inputs.append(self.__robuster.noise_camera_input(model_input, \
-                        self.__noise_params[self.__noise_id][0], self.__noise_params[self.__noise_id][1], \
-                        self.__directions[self.__direction_id]))
-            elif model_input.senor == 'lidar':
-                if self.__directions[self.__direction_id] in model_input.order:
-                    noised_inputs.append(self.__robuster.noise_lidar_input(model_input, \
-                        self.__noise_params[self.__noise_id][0], self.__noise_params[self.__noise_id][1], \
-                        self.__directions[self.__direction_id]))
+    def perturb_data(self, input_data, sensor_info):
         
-        # In case no noise was added to the input
-        if len(noised_inputs) == 0:
-            noised_inputs.append(model_args[0].data)
-        
+        input_to_noise = input_data[sensor_info['id']]
+        noised_input = None
+
+        noised_input = self.__robuster.guassian_noise(input_to_noise, sensor_info, \
+                        self.__noise_params[self.__noise_id][0], self.__noise_params[self.__noise_id][1])
+        input_data[sensor_info['id']][1][:, :, :3] = noised_input
+
         self.__no_predictions += 1
 
-
-    def predict(self, model_args):    
-        model_args = [SensorArgs(**arg) for arg in model_args['model_args']]
-        # add noise to data from sensors
-        noised_inputs = []
-        self.__is_addnoise = True
-        if self.__is_addnoise:
-            model_input = model_args[self.__sensor_id]
-            if model_input.sensor == 'camera':
-                if self.__directions[self.__direction_id] in model_input.order:
-                    noised_inputs.append(self.__robuster.noise_camera_input(model_input, \
-                        self.__noise_params[self.__noise_id][0], self.__noise_params[self.__noise_id][1], \
-                        self.__directions[self.__direction_id]))
-            elif model_input.senor == 'lidar':
-                if self.__directions[self.__direction_id] in model_input.order:
-                    noised_inputs.append(self.__robuster.noise_lidar_input(model_input, \
-                        self.__noise_params[self.__noise_id][0], self.__noise_params[self.__noise_id][1], \
-                        self.__directions[self.__direction_id]))
-        
-        # In case no noise was added to the input
-        if len(noised_inputs) == 0:
-            noised_inputs.append(model_args[0].data)
-
-        # only estimate emission for a select amount of time due to processng speed issues
-        if self.__no_predictions % self.__emission_calc_rate == 0:
-            self.__emitter.start_emissions_tracker()
-            self.__output = self.__model.forward(*noised_inputs)
-            self.__emitter.stop_emissions_tracker()
-
-        else:
-            self.__output = self.__model.forward(*noised_inputs)
-        
-        #keep track of how many predictions have been made so as to know when to 
-        #trigger the carbon emission function
-        self.__no_predictions += 1
-
-        return self.__output
-
-
+        return input_data
+    
     # call this method after each scenario run is complete. Robustness stats would be logged
     # a new runs starts with the next noise flavour
     def register_model_rai(self, model_accuracy):
 
         # Increment directions after each run to noise the input from the next camera
-        
-        print("+++++++++++++++++", self.__input_dimensions)
         
         final_metric_analysis = None
         
@@ -204,107 +118,3 @@ class RAIModels(BaseRAIModel):
                     }})
         
         return value
-    
-
-    def add_model(self, model):
-        self.model_list.append(model)
-        
-    def remove_model(self, modelname):
-        self.model_list.remove(modelname)
-        
-    def list_models(self):
-        model_json = ""
-        for model in self.model_list:
-            model_json += model.get_model_info()
-            if model != self.model_list[-1]:
-                model_json += ","
-                                
-            model_json += "\n"
-            
-        model_json = "[" + model_json + "]"
-        
-        return model_json
-    
-    def get_model(self, modelname):
-        for model in self.model_list:
-            if model.get_model_name() == modelname:
-                return model
-        return "Model information NOT Found"
-    
-    def rank_models(self, rank_by = "rai_index"):
-        sorted_json = ""
-        
-        if rank_by == "rai_index":
-            sorted_models = sorted(self.model_list, key=lambda x: x.get_model_index(), reverse=True)
-        elif rank_by == ResponsibleMetrics.EMISSIONS:
-            sorted_models = sorted(self.model_list, key=lambda x: x.get_emissions_index(), reverse=True)
-        elif rank_by == ResponsibleMetrics.ROBUSTNESS:
-            sorted_models = sorted(self.model_list, key=lambda x: x.robustness_index(), reverse=True)
-        elif rank_by == ResponsibleMetrics.INTERPRETABILITY:
-            sorted_models = sorted(self.model_list, key=lambda x: x.get_interpretability_index(), reverse=True)
-            
-        for model in sorted_models:
-            sorted_json += model.model_rai_components()
-            if(model != sorted_models[-1]):
-                sorted_json += ","
-            sorted_json += "\n"
-            
-        sorted_json = "[" + sorted_json + "]"
-        return sorted_json
-    
-
-
-
-# class RAIModels(BaseRAIModel):
-#     model_list = []
-    
-#     def __init__(self, model_args):
-#         self.model_list = []
-#         self.model = model_args['model']
-#         self.model_args = [SensorArgs(**arg) for arg in model_args]
-        
-#     def add_model(self, model):
-#         self.model_list.append(model)
-        
-#     def remove_model(self, modelname):
-#         self.model_list.remove(modelname)
-        
-#     def list_models(self):
-#         model_json = ""
-#         for model in self.model_list:
-#             model_json += model.get_model_info() 
-#             if model != self.model_list[-1]:
-#                 model_json += ","
-                                
-#             model_json += "\n"
-            
-#         model_json = "[" + model_json + "]"
-        
-#         return model_json
-    
-#     def get_model(self, modelname):
-#         for model in self.model_list:
-#             if model.get_model_name() == modelname:
-#                 return model
-#         return "Model information NOT Found"
-    
-#     def rank_models(self, rank_by = "rai_index"):
-#         sorted_json = ""
-        
-#         if rank_by == "rai_index":
-#             sorted_models = sorted(self.model_list, key=lambda x: x.get_model_index(), reverse=True)
-#         elif rank_by == ResponsibleMetrics.EMISSIONS:
-#             sorted_models = sorted(self.model_list, key=lambda x: x.get_emissions_index(), reverse=True)
-#         elif rank_by == ResponsibleMetrics.ROBUSTNESS:
-#             sorted_models = sorted(self.model_list, key=lambda x: x.robustness_index(), reverse=True)
-#         elif rank_by == ResponsibleMetrics.INTERPRETABILITY:
-#             sorted_models = sorted(self.model_list, key=lambda x: x.get_interpretability_index(), reverse=True)
-            
-#         for model in sorted_models:
-#             sorted_json += model.model_rai_components()
-#             if(model != sorted_models[-1]):
-#                 sorted_json += ","
-#             sorted_json += "\n"
-            
-#         sorted_json = "[" + sorted_json + "]"
-#         return sorted_json

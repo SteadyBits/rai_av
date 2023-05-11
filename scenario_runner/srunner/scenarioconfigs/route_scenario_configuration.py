@@ -48,3 +48,8 @@ class RouteScenarioConfiguration(ScenarioConfiguration):
 
     trajectory = None
     scenario_file = None
+
+    #add noise info
+    sensor_to_noise = None
+    rai_engine = None
+

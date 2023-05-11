@@ -70,7 +70,13 @@ class AgentWrapper(object):
         """
         self._agent = agent
 
-    def __call__(self, rai_engine=None):
+    def __call__(self):
+        """
+        Pass the call directly to the agent
+        """
+        return self._agent()
+    
+    def __call__(self, rai_engine):
         """
         Pass the call directly to the agent
         """

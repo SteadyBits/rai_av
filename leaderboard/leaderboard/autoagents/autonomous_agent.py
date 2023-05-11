@@ -12,6 +12,7 @@ from __future__ import print_function
 from enum import Enum
 
 import carla
+import cv2
 from srunner.scenariomanager.timer import GameTime
 
 from leaderboard.utils.route_manipulation import downsample_route
@@ -102,7 +103,7 @@ class AutonomousAgent(object):
         Returns the next vehicle controls
         """
         input_data = self.sensor_interface.get_data()
-
+        
         timestamp = GameTime.get_time()
 
         if not self.wallclock_t0:
@@ -117,7 +118,8 @@ class AutonomousAgent(object):
 
         return control
     
-    def __call__(self, rai_engine):
+
+    def __call__(self, rai_engine, sensor_info):
         """
         Execute the agent call, e.g. agent()
         Returns the next vehicle controls
@@ -136,19 +138,47 @@ class AutonomousAgent(object):
             return control
         
         else:
+            
+            control = None
             #Create an instance of RAI engine
-            input_data = rai_engine.perturb_data(input_data)
+            input_data = rai_engine.perturb_data(input_data, sensor_info)
 
             timestamp = GameTime.get_time()
             wallclock = GameTime.get_wallclocktime()
             print('======[Agent] Wallclock_time = {} / Sim_time = {}'.format(wallclock, timestamp))
 
-            rai_engine.emmitter.start_tracking()
-            control = self.run_step(input_data, timestamp)
-            rai_engine.emitter.stop_tracking()
-            control.manual_gear_shift = False
+            # only estimate emission for a select amount of time due to processng speed issues
+            if rai_engine.no_predictions % rai_engine.emission_calc_rate == 0:
+                rai_engine.start_emission_tracker()
+                control = self.run_step(input_data, timestamp)
+                rai_engine.stop_emission_tracker()
+            
+            else:
+                control = self.run_step(input_data, timestamp)
 
+            control.manual_gear_shift = False
             return control
+
+
+    def process_input_data(input_data):
+
+        if 'rgb' in input_data:
+            rgb = cv2.cvtColor(input_data['rgb'][1][:, :, :3], cv2.COLOR_BGR2RGB)
+        rgb_left = cv2.cvtColor(input_data['rgb_left'][1][:, :, :3], cv2.COLOR_BGR2RGB)
+        rgb_right = cv2.cvtColor(input_data['rgb_right'][1][:, :, :3], cv2.COLOR_BGR2RGB)
+        gps = input_data['gps'][1][:2]
+        speed = input_data['speed'][1]['speed']
+        compass = input_data['imu'][1][-1]
+
+        return {
+                'rgb': rgb,
+                'rgb_left': rgb_left,
+                'rgb_right': rgb_right,
+                'gps': gps,
+                'speed': speed,
+                'compass': compass
+                }
+    
 
     def set_global_plan(self, global_plan_gps, global_plan_world_coord):
         """

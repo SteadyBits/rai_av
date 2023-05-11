@@ -25,5 +25,5 @@ model_args = dict({'model_args': [
     ]})
 
 rai_engine = responsibleAI.RAIModels(None, model_args)
-robust = rai_engine.__robuster
+robust = rai_engine
 robust.get_robustness()

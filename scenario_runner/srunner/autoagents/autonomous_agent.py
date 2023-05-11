@@ -97,6 +97,7 @@ class AutonomousAgent(object):
         control.manual_gear_shift = False
 
         return control
+            
 
     def set_global_plan(self, global_plan_gps, global_plan_world_coord):
         """

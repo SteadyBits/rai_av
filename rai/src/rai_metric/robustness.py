@@ -11,33 +11,49 @@ class Robustness:
         self.__perturbation_scores = {}
 
     
-    def noise_camera_input(self, sensor_data, mean=0.5, stddev=0.0, direction='front'):
+    # def noise_camera_input(self, sensor_data, mean=0, stddev=0.0, direction='front'):
     
-        model_inputs = sensor_data.data
-        start_idx = sensor_data.order[direction] * sensor_data.data.shape[2]
-        end_idx = start_idx + sensor_data.data.shape[2]
+    #     model_inputs = sensor_data.data
+    #     start_idx = sensor_data.order[direction] * sensor_data.data.shape[2]
+    #     end_idx = start_idx + sensor_data.data.shape[2]
         
-        input_image = model_inputs[:, 0, :, start_idx:end_idx]
+    #     input_image = model_inputs[:, 0, :, start_idx:end_idx]
         
-        # Generate random noise with the same shape as the input image
-        noise = np.random.normal(mean, stddev, input_image.shape)
-        # Add the noise to the input image
-        input_image += torch.tensor(noise.astype(np.uint8))
+    #     # Generate random noise with the same shape as the input image
+    #     noise = np.random.normal(mean, stddev, input_image.shape)
+    #     # Add the noise to the input image
+    #     input_image += torch.tensor(noise.astype(np.uint8))
 
-        model_inputs[:, 0, :, start_idx:end_idx] = input_image
+    #     model_inputs[:, 0, :, start_idx:end_idx] = input_image
 
-        figure = plt.figure(figsize=(10, 8))
-        cols, rows = 5, 5
-        for i in range(1, cols * rows + 1):
-            sample_idx = torch.randint(len(model_inputs), size=(1,)).item()
-            img = model_inputs[sample_idx]
-            figure.add_subplot(rows, cols, i)
-            plt.title("labels")
-            plt.axis("off")
-            plt.imshow(img.squeeze(), cmap="gray")
-        plt.show()
+    #     figure = plt.figure(figsize=(10, 8))
+    #     cols, rows = 5, 5
+    #     for i in range(1, cols * rows + 1):
+    #         sample_idx = torch.randint(len(model_inputs), size=(1,)).item()
+    #         img = model_inputs[sample_idx]
+    #         figure.add_subplot(rows, cols, i)
+    #         plt.title("labels")
+    #         plt.axis("off")
+    #         plt.imshow(img.squeeze(), cmap="gray")
+    #     plt.show()
 
-        return model_inputs
+    #     return model_inputs
+
+
+    def guassian_noise(self, sensor_data, sensor_info, mean=0, stddev=1):
+        if 'camera' in sensor_info:
+            # Generate random noise with the same shape as the input image
+            noise = np.random.normal(mean, stddev, sensor_data.shape)
+            # Add the noise to the input image
+            sensor_data += noise.astype(np.uint8)
+
+        elif 'lidar' in sensor_info:
+            # Generate random noise with the same shape as the input image
+            noise = np.random.normal(mean, stddev, sensor_data.shape)
+            # Add the noise to the input image
+            sensor_data += noise.astype(np.uint8)
+
+        return sensor_data
     
     def noise_lidar_input(self, sensor_data, mean=0, stddev=50, direction='front'):
         

@@ -99,7 +99,7 @@ class LeaderboardEvaluator(object):
         print("Agent loading complete...")
 
         #responsible AI Index
-        self.model_args = dict({'model_args': [
+        model_args = dict({'model_args': [
             {'sensor':'camera',
             'data': 0,
             'no_of_images': 1,
@@ -108,9 +108,11 @@ class LeaderboardEvaluator(object):
             'concat_axis': -1
             }
             ]})
-        self.rai_engine = responsibleAI.RAIModels(None, self.model_args)
+        self.rai_engine = responsibleAI.RAIModels()
         self.is_rai = False
 
+        #dictionary to organise sensors
+        self.sensor_types = {}
         # Create the ScenarioManager
         self.manager = ScenarioManager(args.timeout, args.debug > 1, args.is_rai)
 
@@ -261,7 +263,15 @@ class LeaderboardEvaluator(object):
         self.statistics_manager.save_record(current_stats_record, config.index, checkpoint)
         self.statistics_manager.save_entry_status(entry_status, False, checkpoint)
 
-    def _load_and_run_scenario(self, args, config, rai_engine=None):
+    def _organise_sensors(self, sensors):
+        assert(len(sensor) > 0)
+        for sensor in sensors:
+            if sensor['type'] == 'sensor.camera.rgb':
+                self.sensor_type['camera'].append({'type': 'camera', 'id': sensor['id']})
+            elif sensor['type'] ==  'sensor.lidar.ray_cast':
+                self.sensor_types['lidar'].append({'type': 'lidar', 'id': sensor['id']})
+
+    def _load_and_run_scenario(self, args, config):
         """
         Load and run the scenario given by config.
 
@@ -289,6 +299,10 @@ class LeaderboardEvaluator(object):
             if not self.sensors:
                 self.sensors = self.agent_instance.sensors()
                 track = self.agent_instance.track
+                
+                #check that sensors have been organised
+                if not self.sensor_types:
+                    self._organise_sensors(self.sensors)
 
                 AgentWrapper.validate_sensor_configuration(self.sensors, track, args.track)
 
@@ -364,7 +378,7 @@ class LeaderboardEvaluator(object):
 
         # Run the scenario
         try:
-            self.manager.run_scenario(rai_engine)
+            self.manager.run_scenario(config.rai_engine)
 
         except AgentError as e:
             # The agent has failed -> stop the route
@@ -421,20 +435,8 @@ class LeaderboardEvaluator(object):
 
         #whether to run rai index of not
         self.is_rai = args.is_rai
-        if args.is_rai:
-            if route_indexer.peek():
-                # setup
-                config = route_indexer.next()
-                iterations = 1
-                while iterations > -1:
-                    self._load_and_run_scenario(args, config, self.rai_engine)
-                    iterations =- 1
-                    route_record = self.statistics_manager.compute_global_statistics(1)
-                    agent_score = route_record.scores['score_composed']
-                    self.rai_engine.register_model_rai(agent_score)
+        if not args.is_rai:
 
-        else:
-            
             while route_indexer.peek():
                 # setup
                 config = route_indexer.next()
@@ -448,6 +450,27 @@ class LeaderboardEvaluator(object):
             print("\033[1m> Registering the global statistics\033[0m")
             global_stats_record = self.statistics_manager.compute_global_statistics(route_indexer.total)
             StatisticsManager.save_global_record(global_stats_record, self.sensor_icons, route_indexer.total, args.checkpoint)
+            
+        else:
+            if route_indexer.peek():
+                # setup
+                config = route_indexer.next()
+                if 'camera' in self.sensor_types:
+                    sensor_len = len(self.sensor_types['camera'])
+                    sensor_itr = 0
+                    while sensor_itr < sensor_len:
+                        config.sensor_to_noise = self.sensor_types['camera'][sensor_itr]
+                        config.rai_engine = self.rai_engine
+                        self._load_and_run_scenario(args, config)
+                        route_record = self.statistics_manager.compute_global_statistics(1)
+                        agent_score = route_record.scores['score_composed']
+                        self.rai_engine.register_model_rai(agent_score)
+                        sensor_itr += 1
+                
+                elif 'lidar' in self.sensor_types:
+                    pass
+
+            
 
 
 def main():
