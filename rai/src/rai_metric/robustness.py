@@ -40,18 +40,25 @@ class Robustness:
     #     return model_inputs
 
 
-    def guassian_noise(self, sensor_data, sensor_info, mean=0, stddev=1):
-        if 'camera' in sensor_info:
-            # Generate random noise with the same shape as the input image
-            noise = np.random.normal(mean, stddev, sensor_data.shape)
-            # Add the noise to the input image
-            sensor_data += noise.astype(np.uint8)
+    def guassian_noise(self, sensor_data, sensor_info, mean=0, stddev=25):
+        if  sensor_info:
+            if sensor_info['type'] == 'camera':
+                # Generate random noise with the same shape as the input image
+                sensor_data = sensor_data[1][:, :, :3]
+                noise = np.random.normal(mean, stddev, sensor_data.shape)
+                # Add the noise to the input image
+                sensor_data = np.add(sensor_data, noise, out=sensor_data, casting="unsafe")
+                # Ensure pixel values are clamped within the valid range (0-255)
+                sensor_data = np.clip(sensor_data, 0, 255)
 
-        elif 'lidar' in sensor_info:
-            # Generate random noise with the same shape as the input image
-            noise = np.random.normal(mean, stddev, sensor_data.shape)
-            # Add the noise to the input image
-            sensor_data += noise.astype(np.uint8)
+            elif sensor_info['type'] == 'lidar':
+                # Generate random noise with the same shape as the input image
+                sensor_data = sensor_data[1][:, :, :3]
+                noise = np.random.normal(mean, stddev, sensor_data.shape)
+                # Add the noise to the input image
+                sensor_data = np.add(sensor_data, noise, out=sensor_data, casting="unsafe")
+                # Ensure pixel values are clamped within the valid range (0-255)
+                sensor_data = np.clip(sensor_data, 0, 255)
 
         return sensor_data
     

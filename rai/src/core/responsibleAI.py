@@ -33,8 +33,8 @@ class RAIModels(BaseRAIModel):
         self.__robuster = Robustness()
         self.__emitter = Emission()
 
-        self.__no_predictions = 0
-        self.__emission_calc_rate = 20
+        self.no_predictions = 0
+        self.emission_calc_rate = 20
 
         self.__mean = 0.5
         self.__stddev = 0.0 # modify between 0.1 and 0.5
@@ -50,11 +50,10 @@ class RAIModels(BaseRAIModel):
         input_to_noise = input_data[sensor_info['id']]
         noised_input = None
 
-        noised_input = self.__robuster.guassian_noise(input_to_noise, sensor_info, \
-                        self.__noise_params[self.__noise_id][0], self.__noise_params[self.__noise_id][1])
+        noised_input = self.__robuster.guassian_noise(input_to_noise, sensor_info)
         input_data[sensor_info['id']][1][:, :, :3] = noised_input
 
-        self.__no_predictions += 1
+        self.no_predictions += 1
 
         return input_data
     
@@ -69,7 +68,7 @@ class RAIModels(BaseRAIModel):
         #prediction counter starts from zero for a new run
         self.__no_predictions = 0
 
-        self.__robuster.set_robustness_value(model_accuracy, self.__directions[self.__direction_id], self.__sensors[self.__sensor_id])
+        self.__robuster.set_robustness_value(model_accuracy)
 
         self.__noise_id += 1
 

@@ -384,7 +384,7 @@ class LeaderboardEvaluator(object):
 
         # Run the scenario
         try:
-            self.manager.run_scenario(config.rai_engine, self.sensor_types)
+            self.manager.run_scenario(config.rai_engine, config.sensor_to_noise)
 
         except AgentError as e:
             # The agent has failed -> stop the route
@@ -442,7 +442,7 @@ class LeaderboardEvaluator(object):
         #whether to run rai index of not
         self.is_rai = args.is_rai
         args.is_rai = True
-        print("WE AE HERE")
+
         if not args.is_rai:
 
             while route_indexer.peek():
@@ -476,8 +476,9 @@ class LeaderboardEvaluator(object):
                         self._load_and_run_scenario(args, config)
                         route_record = self.statistics_manager.compute_global_statistics(1)
                         agent_score = route_record.scores['score_composed']
-                        self.rai_engine.register_model_rai(agent_score)
+                        #self.rai_engine.register_model_rai(agent_score)
                         sensor_itr += 1
+                        break
                 
                 elif 'lidar' in self.sensor_types:
                     pass
