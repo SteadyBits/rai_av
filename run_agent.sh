@@ -13,7 +13,6 @@ export PYTHONPATH=$PYTHONPATH:leaderboard
 export PYTHONPATH=$PYTHONPATH:leaderboard/team_code
 export PYTHONPATH=$PYTHONPATH:rai/src
 export PYTHONPATH=$PYTHONPATH:scenario_runner
-export PYTHONPATH=$PYTHONPATH:/home/domeiza/RAILS/carlachallenge/responsibleAI/src
 export PYTHONPATH=$PYTHONPATH:/home/daniel/code/RAILS/CarlaChallenge/LearningByCheating2020/rai/src
 
 if [ -d "$TEAM_CONFIG" ]; then

@@ -442,6 +442,7 @@ class LeaderboardEvaluator(object):
         #whether to run rai index of not
         self.is_rai = args.is_rai
         args.is_rai = True
+        print("WE AE HERE")
         if not args.is_rai:
 
             while route_indexer.peek():
@@ -459,16 +460,27 @@ class LeaderboardEvaluator(object):
             StatisticsManager.save_global_record(global_stats_record, self.sensor_icons, route_indexer.total, args.checkpoint)
             
         else:
+            print("WE AE HERE2")
             if route_indexer.peek():
+                print("WE AE HERE2.5")
                 # setup
                 config = route_indexer.next()
+                
+                #create a dummy agent to retrive basic sensor info
+                self.create_dumy_agent_with_sensors(args)
+
+                print("WE AE HERE3", self.sensor_types)
                 if 'camera' in self.sensor_types:
+                    print("WE AE HERE3.5")
                     sensor_len = len(self.sensor_types['camera'])
                     sensor_itr = 0
                     while sensor_itr < sensor_len:
                         config.sensor_to_noise = self.sensor_types['camera'][sensor_itr]
+                        print("WE AE HERE4")
                         config.rai_engine = self.rai_engine
+                        print("WE AE HERE5")
                         self._load_and_run_scenario(args, config)
+                        print("WE AE HERE6")
                         route_record = self.statistics_manager.compute_global_statistics(1)
                         agent_score = route_record.scores['score_composed']
                         self.rai_engine.register_model_rai(agent_score)
@@ -477,9 +489,28 @@ class LeaderboardEvaluator(object):
                 elif 'lidar' in self.sensor_types:
                     pass
 
-            
 
+    def create_dumy_agent_with_sensors(self, args):
+        
+        agent_instance = None
 
+        try:
+            agent_class_name = getattr(self.module_agent, 'get_entry_point')()
+            agent_instance = getattr(self.module_agent, agent_class_name)(args.agent_config)
+            # Check and store the sensors
+            print("Checking sensors...")
+            sensors = agent_instance.sensors()
+            self._organise_sensors(sensors)
+            agent_instance.destroy()
+            agent_instance = None
+
+        except Exception as e:
+            # The agent setup has failed -> start the next route
+            print("\n\033[91mCould not set up the required agent:")
+            print("> {}\033[0m\n".format(e))
+            traceback.print_exc()
+            agent_instance = None
+        
 def main():
     description = "CARLA AD Leaderboard Evaluation: evaluate your Agent in CARLA scenarios\n"
 
