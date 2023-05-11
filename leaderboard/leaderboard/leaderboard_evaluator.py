@@ -267,9 +267,15 @@ class LeaderboardEvaluator(object):
         assert(len(sensors) > 0)
         for sensor in sensors:
             if sensor['type'] == 'sensor.camera.rgb':
-                self.sensor_types['camera'].append({'type': 'camera', 'id': sensor['id']})
+                if 'camera' in self.sensor_types:
+                    self.sensor_types['camera'].append({'type': 'camera', 'id': sensor['id']})  
+                else: 
+                    self.sensor_types['camera'] = [{'type': 'camera', 'id': sensor['id']}]
             elif sensor['type'] ==  'sensor.lidar.ray_cast':
-                self.sensor_types['lidar'].append({'type': 'lidar', 'id': sensor['id']})
+                if 'lidar' in self.sensor_types:
+                    self.sensor_types['lidar'].append({'type': 'lidar', 'id': sensor['id']})  
+                else: 
+                    self.sensor_types['lidar'] = [{'type': 'lidar', 'id': sensor['id']}]
 
     def _load_and_run_scenario(self, args, config):
         """
@@ -378,7 +384,7 @@ class LeaderboardEvaluator(object):
 
         # Run the scenario
         try:
-            self.manager.run_scenario(config.rai_engine)
+            self.manager.run_scenario(config.rai_engine, self.sensor_types)
 
         except AgentError as e:
             # The agent has failed -> stop the route
@@ -435,6 +441,7 @@ class LeaderboardEvaluator(object):
 
         #whether to run rai index of not
         self.is_rai = args.is_rai
+        args.is_rai = True
         if not args.is_rai:
 
             while route_indexer.peek():

@@ -76,11 +76,11 @@ class AgentWrapper(object):
         """
         return self._agent()
     
-    def __call__(self, rai_engine):
+    def __call__(self, rai_engine, sensor_info):
         """
         Pass the call directly to the agent
         """
-        return self._agent(rai_engine)
+        return self._agent(rai_engine, sensor_info)
 
     def setup_sensors(self, vehicle, debug_mode=False):
         """
