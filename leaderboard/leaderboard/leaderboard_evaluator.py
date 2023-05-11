@@ -264,10 +264,10 @@ class LeaderboardEvaluator(object):
         self.statistics_manager.save_entry_status(entry_status, False, checkpoint)
 
     def _organise_sensors(self, sensors):
-        assert(len(sensor) > 0)
+        assert(len(sensors) > 0)
         for sensor in sensors:
             if sensor['type'] == 'sensor.camera.rgb':
-                self.sensor_type['camera'].append({'type': 'camera', 'id': sensor['id']})
+                self.sensor_types['camera'].append({'type': 'camera', 'id': sensor['id']})
             elif sensor['type'] ==  'sensor.lidar.ray_cast':
                 self.sensor_types['lidar'].append({'type': 'lidar', 'id': sensor['id']})
 
