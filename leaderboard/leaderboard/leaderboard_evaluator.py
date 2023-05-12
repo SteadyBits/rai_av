@@ -476,6 +476,7 @@ class LeaderboardEvaluator(object):
                         self._load_and_run_scenario(args, config)
                         route_record = self.statistics_manager.compute_global_statistics(1)
                         agent_score = route_record.scores['score_composed']
+                        print("AGENTS SCORE IS ====== ", agent_score)
                         #self.rai_engine.register_model_rai(agent_score)
                         sensor_itr += 1
                         break
