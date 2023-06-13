@@ -10,6 +10,9 @@ This module provides the base class for all autonomous agents
 from __future__ import print_function
 
 from enum import Enum
+import importlib
+import os
+import sys
 
 import carla
 import cv2
@@ -46,6 +49,8 @@ class AutonomousAgent(object):
         self.setup(path_to_conf_file)
 
         self.wallclock_t0 = None
+
+        self.first_run = True
 
     def setup(self, path_to_conf_file):
         """
@@ -97,36 +102,44 @@ class AutonomousAgent(object):
         """
         pass
 
+    # def __call__(self):
+    #     """
+    #     Execute the agent call, e.g. agent()
+    #     Returns the next vehicle controls
+    #     """
+    #     input_data = self.sensor_interface.get_data()
+        
+    #     timestamp = GameTime.get_time()
+
+    #     if not self.wallclock_t0:
+    #         self.wallclock_t0 = GameTime.get_wallclocktime()
+    #     wallclock = GameTime.get_wallclocktime()
+    #     wallclock_diff = (wallclock - self.wallclock_t0).total_seconds()
+
+    #     # print('======[Agent] Wallclock_time = {} / {} / Sim_time = {} / {}x'.format(wallclock, wallclock_diff, timestamp, timestamp/(wallclock_diff+0.001)))
+
+    #     control = self.run_step(input_data, timestamp)
+    #     control.manual_gear_shift = False
+
+    #     return control
+    
+
     def __call__(self):
         """
         Execute the agent call, e.g. agent()
         Returns the next vehicle controls
         """
+        rai_variables = None
         input_data = self.sensor_interface.get_data()
-        
-        timestamp = GameTime.get_time()
+        if self.first_run:
+            evaluator_filepath = 'leaderboard_evaluator.py'
+            rai_object_identifier = 'rai_support_variables'
+            module_name = os.path.basename(evaluator_filepath).split('.')[0]
+            sys.path.insert(0, os.path.dirname(evaluator_filepath))
+            module_agent = importlib.import_module(module_name)
+            rai_variables = getattr(module_agent, rai_object_identifier, None)
+            self.first_run = False
 
-        if not self.wallclock_t0:
-            self.wallclock_t0 = GameTime.get_wallclocktime()
-        wallclock = GameTime.get_wallclocktime()
-        wallclock_diff = (wallclock - self.wallclock_t0).total_seconds()
-
-        # print('======[Agent] Wallclock_time = {} / {} / Sim_time = {} / {}x'.format(wallclock, wallclock_diff, timestamp, timestamp/(wallclock_diff+0.001)))
-
-        control = self.run_step(input_data, timestamp)
-        control.manual_gear_shift = False
-
-        return control
-    
-
-    def __call__(self, rai_engine, sensor_info):
-        """
-        Execute the agent call, e.g. agent()
-        Returns the next vehicle controls
-        """
-        
-        input_data = self.sensor_interface.get_data()
-        print("INPUT_DATA ++++++++++++ ", input_data.keys)
         if rai_engine is None:
             timestamp = GameTime.get_time()
             wallclock = GameTime.get_wallclocktime()
@@ -141,6 +154,8 @@ class AutonomousAgent(object):
             
             control = None
             #Create an instance of RAI engine
+            rai_engine = rai_variables['rai_engine']
+            sensor_info = rai_variables['sensor_info']
             input_data = rai_engine.perturb_data(input_data, sensor_info)
 
             timestamp = GameTime.get_time()

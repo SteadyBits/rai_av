@@ -64,6 +64,7 @@ class LeaderboardEvaluator(object):
     client_timeout = 10.0  # in seconds
     wait_for_world = 20.0  # in seconds
     frame_rate = 20.0      # in Hz
+    rai_variables = {'rai_engine':responsibleAI.RAIModels(), 'sensor_info': {}}
 
     def __init__(self, args, statistics_manager):
         """
@@ -114,7 +115,7 @@ class LeaderboardEvaluator(object):
         #dictionary to organise sensors
         self.sensor_types = {}
         # Create the ScenarioManager
-        self.manager = ScenarioManager(args.timeout, args.debug > 1, args.is_rai)
+        self.manager = ScenarioManager(args.timeout, args.debug > 1)
 
         # Time control for summary purposes
         self._start_time = GameTime.get_time()
@@ -384,7 +385,7 @@ class LeaderboardEvaluator(object):
 
         # Run the scenario
         try:
-            self.manager.run_scenario(config.rai_engine, config.sensor_to_noise)
+            self.manager.run_scenario()
 
         except AgentError as e:
             # The agent has failed -> stop the route
@@ -471,8 +472,8 @@ class LeaderboardEvaluator(object):
                     sensor_len = len(self.sensor_types['camera'])
                     sensor_itr = 0
                     while sensor_itr < sensor_len:
-                        config.sensor_to_noise = self.sensor_types['camera'][sensor_itr]
-                        config.rai_engine = self.rai_engine
+                        LeaderboardEvaluator.rai_variables['sensor_info'] = self.sensor_types['camera'][sensor_itr]
+                        #config.rai_engine = self.rai_engine
                         self._load_and_run_scenario(args, config)
                         route_record = self.statistics_manager.compute_global_statistics(1)
                         agent_score = route_record.scores['score_composed']

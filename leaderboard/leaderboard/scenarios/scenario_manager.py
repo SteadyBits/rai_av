@@ -44,8 +44,7 @@ class ScenarioManager(object):
     4. If needed, cleanup with manager.stop_scenario()
     """
 
-
-    def __init__(self, timeout, debug_mode=False, is_rai=False):
+    def __init__(self, timeout, debug_mode=False):
         """
         Setups up the parameters, which will be filled at load_scenario()
         """
@@ -115,7 +114,7 @@ class ScenarioManager(object):
 
         self._agent.setup_sensors(self.ego_vehicles[0], self._debug_mode)
 
-    def run_scenario(self, rai_engine, sensor_info=None):
+    def run_scenario(self):
         """
         Trigger the start of the scenario and wait for it to finish/fail
         """
@@ -133,9 +132,9 @@ class ScenarioManager(object):
                 if snapshot:
                     timestamp = snapshot.timestamp
             if timestamp:
-                self._tick_scenario(timestamp, rai_engine, sensor_info)
+                self._tick_scenario(timestamp)
 
-    def _tick_scenario(self, timestamp, rai_engine, sensor_info):
+    def _tick_scenario(self, timestamp):
         """
         Run next tick of scenario and the agent and tick the world.
         """
@@ -150,7 +149,7 @@ class ScenarioManager(object):
 
             try:
 
-                ego_action = self._agent(rai_engine, sensor_info)
+                ego_action = self._agent()
 
             # Special exception inside the agent that isn't caused by the agent
             except SensorReceivedNoData as e:
